@@ -1,0 +1,47 @@
+version: "3.8"
+services:
+  mongodb:
+    image: 'mongo'
+    volumes: 
+      - data:/data/db
+    # environment: 
+    #   MONGO_INITDB_ROOT_USERNAME: max / - MONGO_INITDB_ROOT_USERNAME=max
+    #   MONGO_INITDB_ROOT_PASSWORD: secret
+    # instead of setup for envirnoment using env_file
+    env_file: 
+      - ./env/mongo.env
+  backend:
+    build: ./backend #build imgae using the dockerfile in backend folder
+    # build: using to build image
+    #   context: ./backend
+    #   dockerfile: Dockerfile
+    #   args:
+    #     some-arg: 1 if using args in dockerfile 
+    ports:
+      - '80:80'
+    volumes: 
+      - logs:/app/logs
+      - ./backend:/app #share whole backend folder 
+      - /app/node_modules #anoymous volume 
+    env_file: 
+      - ./env/backend.env
+    depends_on: #only in docker compose, sometimes one container might depend on another container to be up and run
+    #the backend(API) wants oto connect to mongodb
+    # the depends_on let compose know it should bring up mongodb and only onece that is up and running, it should creat this backend container
+      - mongodb
+  frontend:
+    build: ./frontend
+    ports: 
+      - '3000:3000'
+    volumes: 
+      - ./frontend/src:/app/src
+    stdin_open: true #let docker know that this service needs an open input connection
+    tty: true #at the end -it flag is just combination of the dash input flag for opening strandard input
+    #those two options added the frontend container will be started in this interactive mode 
+    depends_on: 
+      - backend
+
+volumes:
+  data:
+  logs:
+  
